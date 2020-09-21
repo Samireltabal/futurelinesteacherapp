@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Sample Webpack App</title>
-    <link rel="stylesheet" href="node_modules/uikit/dist/css/uikit-rtl.css">
 
   </head>
   <body>
@@ -22,7 +21,8 @@
 
       </div>
       <div class="uk-flex-center" uk-grid>
-          <div class="uk-margin-xlarge-top"><span uk-spinner="ratio: 4.5"></span></div>
+          <div id="loading" class="uk-margin-xlarge-top"><span uk-spinner="ratio: 4.5"></span></div>
+          <div id="content" class="uk-margin-xlarge-top"></div>
       </div>
     </div>
     <script type="module" src="/bundle.js"></script>

@@ -1,8 +1,10 @@
 import axios from 'axios'
-export function ping() {
-    axios.get('https://api.futurelines.net/api/ping').then((response) => {
-        $("#pingResult").text(response)
+export async function ping() {
+    var data;
+    await axios.get('https://api.futurelines.net/api/ping').then((response) => {
+        data = response
     }).catch((error) => {
-        $("#pingResult").text(error)
+        data = error
     })
+    return data;
 }
