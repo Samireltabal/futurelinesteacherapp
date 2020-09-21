@@ -11,19 +11,27 @@
   <body>
     <div class="uk-container-fluid">
       <div class="uk-card uk-card-body uk-card-primary">
-          
         <h3 class="uk-card-title">عنوان رئيسي</h3>  
-         <p id="tester"></p>
-          
           <button class="uk-button uk-button-default"  uk-icon="icon: heart" uk-tooltip="title: Hello World"> شاهد  </button>
           <span class="uk-margin-small-right" uk-icon="check"></span>
           <a href="" uk-icon="heart"></a>
 
       </div>
-      <div class="uk-flex-center" uk-grid>
-          <div id="loading" class="uk-margin-xlarge-top"><span uk-spinner="ratio: 4.5"></span></div>
-          <div id="content" class="uk-margin-xlarge-top"></div>
+      
+      <div class="uk-card uk-card-default uk-grid-collapse uk-child-width-1-2@s uk-margin" uk-grid>
+        <div>
+            <div class="uk-card-body">
+                <h3 class="uk-card-title">Media Left</h3>
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.</p>
+            </div>
+        </div>
+        <div class="uk-card-media-right uk-cover-container">
+          <div class="uk-card-badge uk-label">مباشر</div>
+          <video id="localVideo" width="640" autoplay playsinline controls="false"/>
+          <canvas width="600" height="400"></canvas>
       </div>
+      </div>    
+      <div id="loading" class="uk-margin-xlarge-top"><span uk-spinner="ratio: 4.5"></span></div>
     </div>
     <script type="module" src="/bundle.js"></script>
   </body>

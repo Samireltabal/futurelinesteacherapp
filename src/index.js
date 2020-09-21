@@ -5,18 +5,14 @@ UIkit.use(Icons);
 UIkit.notification('اهلاً بالعالم');
 import $ from 'jquery'
 import './index.css';
+import { getConnectedDevices, updateCameraList, playVideoFromCamera } from './js/stream';
 import { ping } from './js/app'
-
 $(document).ready(function () {
     $('#tester').text(process.env.STREAM_HOST)
     $('#tester').append(`<br> ${process.env.WEBSOCKET_HOST}`)
     ping().then((response) => {
         $('#loading').hide();
-        $('#content').html(`
-            <pre>
-                ${response.data}
-            </pre>
-        `);
+        $('#content').show();
     }).catch((error) => {
         $('#loading').hide();
         $('#content').html(`
@@ -24,6 +20,9 @@ $(document).ready(function () {
                 ${error}
             </pre>
         `);
-    })
+    });
+    getConnectedDevices('videoinput',  function(devices) {
+        updateCameraList(devices);
+    });
+    playVideoFromCamera();
 })
-
