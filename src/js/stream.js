@@ -1,22 +1,7 @@
-import $ from 'jquery';
-export function getConnectedDevices(type, callback) {
-    navigator.mediaDevices.enumerateDevices()
-        .then(devices => {
-            const filtered = devices.filter(device => device.kind === type);
-            callback(filtered);
-        });
-}
-
-
-export function updateCameraList(cameras) {
-    const listElement = $('#availableCameras');
-    cameras.map(camera => {
-        const item = `<option val="${camera.deviceId}">${camera.label}</option>`;
-        listElement.append(item);
-    })
-}
-
 // Open camera with at least minWidth and minHeight capabilities
+import { getConnectedDevices } from './streamHelpers';
+
+
 async function openCamera(cameraId, minWidth, minHeight) {
     const constraints = {
         'audio': {'echoCancellation': true},
