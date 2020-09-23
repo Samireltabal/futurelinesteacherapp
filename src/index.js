@@ -3,7 +3,7 @@ import Icons from 'uikit/dist/js/uikit-icons';
 import { WebRTCAdaptor } from './js/webrtc_adaptor';
 UIkit.use(Icons);
 // components can be called from the imported UIkit reference
-UIkit.notification('اهلاً بالعالم');
+UIkit.notification('test', 'success');
 import $ from 'jquery'
 import './index.css';
 import { mqttInit } from './js/mqtt';
@@ -62,7 +62,7 @@ var token = null
 initClass(apiToken).then((response) => {
     User = response.data
     localStorage.setItem('user', JSON.stringify(response.data));
-    fetchStudents(apiToken, classId).then(() => {
+    fetchStudents(apiToken, streamId).then(() => {
         $(document).ready( function () {
             var students = document.getElementsByClassName('StudentItem')
             for (let element of students) {
@@ -75,40 +75,32 @@ initClass(apiToken).then((response) => {
                     remoteStream: null,
                     order: "DENY_ALL"
                 }
-                Client.publish('/class/' + classId + "/orders", JSON.stringify(obj));
+                Client.publish('/class/' + streamId + "/orders", JSON.stringify(obj));
             });
         });
         });
         $('#userName').text(response.data.name);
         initWebRTCAdaptor(false, true);
-        fetchChat(apiToken, classId, User);
-        Client = mqttInit(apiToken,classId, User);
-        handleForm();
+        fetchChat(apiToken, streamId, User);
+        // Client = mqttInit(apiToken,streamId, User);
+        // handleForm();
     });
     $(start_publish_button).on('click', startPublishing);
     $(stop_publish_button).on('click', stopPublishing);
 	export function toggle_camera() {
         if(isCameraOff)  {
-            // $(camera_button).addClass('btn-success');
-            // $(camera_button).removeClass('btn-danger');
             $('#camera-disabled').hide();
             turnOnLocalCamera();
         } else { 
-            // $(camera_button).addClass('btn-danger');
-            // $(camera_button).removeClass('btn-success');
             $('#camera-disabled').show();
             turnOffLocalCamera();
         }
     }
     export function toggle_audio() {
         if(isMicMuted)  {
-            // $(audio_button).addClass('btn-success');
-            // $(audio_button).removeClass('btn-danger');
             $('#audio-disabled').hide();
             unmuteLocalMic();
         } else { 
-            // $(audio_button).addClass('btn-danger');
-            // $(audio_button).removeClass('btn-success');
             $('#audio-disabled').show();
             muteLocalMic();
         }
@@ -116,12 +108,13 @@ initClass(apiToken).then((response) => {
     function sendNotificationEvent(eventType) {
         if(isDataChannelOpen) {
             var notEvent = { streamId: streamId, eventType:eventType };
-    
+            console.log(notEvent);
             webRTCAdaptor.sendData(streamId, JSON.stringify(notEvent));
         }    else {
             console.log("Could not send the notification because data channel is not open.");
         }
     }
+    
     function turnOffLocalCamera() {
         webRTCAdaptor.turnOffLocalCamera();
         isCameraOff = true;
@@ -255,12 +248,12 @@ initClass(apiToken).then((response) => {
 				peerconnection_config : pc_config,
 				sdp_constraints : sdpConstraints,
 				localVideoId : "localVideo",
-				debug:false,
+				debug:true,
 				bandwidth:900,
 				callback : function(info, obj) {
 					if (info == "initialized") {
                         isDataChannelOpen = true;
-						console.log("initialized");
+                        console.log("initialized");
 						start_publish_button.disabled = false;
 						stop_publish_button.disabled = true;
 						if (publishImmediately) {
@@ -271,7 +264,8 @@ initClass(apiToken).then((response) => {
 						//stream is being published
 						console.log("publish started");
 						start_publish_button.disabled = true;
-						stop_publish_button.disabled = false;
+                        stop_publish_button.disabled = false;
+                        webRTCAdaptor.enableStats(streamId);
 						startAnimation();
 						if (autoRepublishEnabled && autoRepublishIntervalJob == null) 
 						{
@@ -279,12 +273,27 @@ initClass(apiToken).then((response) => {
 								checkAndRepublishIfRequired();
 							}, 3000);
 							
-						}
+                        }
+                        setInterval(() => {
+                            var state = webRTCAdaptor.signallingState(streamId);
+                            if (state != null
+                                    && state != "closed") {
+                                var iceState = webRTCAdaptor
+                                        .iceConnectionState(streamId);
+                                if (iceState != null
+                                        && iceState != "failed"
+                                        && iceState != "disconnected") {
+                                    console.log(webRTCAdaptor.getStreamInfo(streamId))
+                                }
+                            }
+                        }, 5000);
 					} else if (info == "publish_finished") {
 						//stream is being finished
 						console.log("publish finished");
 						start_publish_button.disabled = false;
-						stop_publish_button.disabled = true;
+                        stop_publish_button.disabled = true;
+                        $('#averageSpeed').text('0');
+                        $('#currentSpeed').text('0');
 					}
 					else if (info == "browser_screen_share_supported") {
 						$(".video-source").prop("disabled", false);
@@ -317,9 +326,10 @@ initClass(apiToken).then((response) => {
 						//obj is the PeerStats which has fields
 						 //averageOutgoingBitrate - kbits/sec
 						//currentOutgoingBitrate - kbits/sec
-						console.log("Average outgoing bitrate " + obj.averageOutgoingBitrate + " kbits/sec"
-								+ " Current outgoing bitrate: " + obj.currentOutgoingBitrate + " kbits/sec");
-	
+						// console.log("Average outgoing bitrate " + obj.averageOutgoingBitrate + " kbits/sec"
+						// 		+ " Current outgoing bitrate: " + obj.currentOutgoingBitrate + " kbits/sec");
+                        $('#averageSpeed').text(obj.averageOutgoingBitrate);
+                        $('#currentSpeed').text(obj.currentOutgoingBitrate);
 					}
 					else if (info == "data_received") {
 						console.log("Data received: " + obj.event.data + " type: " + obj.event.type + " for stream: " + obj.streamId);
@@ -343,7 +353,8 @@ initClass(apiToken).then((response) => {
                 $(".audio-source").find('option:eq(0)').prop("selected", true);	
 					}
 					else {
-						console.log( info + " notification received");
+                        console.log( info + " notification received");
+                        console.log( obj );
 					}
 				},
 				callbackError : function(error, message) {
@@ -398,4 +409,15 @@ initClass(apiToken).then((response) => {
         });
     });
 	//initialize the WebRTCAdaptor
-	initWebRTCAdaptor(false, autoRepublishEnabled);
+	$(document).ready(function() {
+        initWebRTCAdaptor(false, autoRepublishEnabled);
+    })
+
+    $('.uk-button').on('click', function (){
+        $('.uk-section').toggleClass('uk-dark uk-light');
+      
+        $('.uk-container > .uk-card').toggleClass('uk-card-default uk-card-secondary');
+      
+        $('html').toggleClass('uk-background-muted uk-background-secondary');
+      });
+      

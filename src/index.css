@@ -4,7 +4,9 @@
 * {
   font-family: 'Cairo', sans-serif;
 }
-
+.streamData .info {
+  display: block;
+}
 .btn-success , .liveInfo {
   background: #16a085;
   color: #fff;
@@ -276,4 +278,69 @@ background-color: rgba(0,0,0,0.2);
 .contacts_card{
 margin-bottom: 15px !important;
 }
+}
+
+
+.uk-card-small .uk-card-body {
+    padding: 5px 8px;
+    font-size: 13px;
+  }
+
+.uk-border-remove {
+  border: 0 none;
+}
+
+textarea {
+  background: none !important;
+  resize: none;
+}
+
+@keyframes dot-anim {
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(0, -6px);
+  }
+  0% {
+    transform: translate(0, 0);
+  }
+}
+.etc-pattern {
+  width: 6px;
+  height: 6px;
+  background: #222;
+  border-radius: 100%;
+  display: inline-block;
+  animation: dot-anim 1s infinite linear;
+  transform: translate(0, 0);
+}
+
+
+.uk-card {
+  position: relative;
+  z-index: 1;
+}
+
+.guest .uk-card:after, .me .uk-card:after {
+  width: 10px;
+  background: #f5f6fa;
+  height: 45px;
+  position: absolute;
+  bottom: 0;
+}
+.guest .uk-card:after {
+  background: #fff;
+  left: -4px;
+  clip-path: polygon(100% 70%, 0% 100%, 100% 100%);
+}
+.me .uk-card:after {
+  background: #1e87f0;
+  right: -4px;
+  clip-path: polygon(0 70%, 0% 100%, 100% 100%);
+}
+
+#chatbox { 
+  overflow-y: auto;
+  max-height: 75vh;
 }
