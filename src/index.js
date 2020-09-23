@@ -29,12 +29,12 @@ var token = null
 	var stop_publish_button = document.getElementById("stop_publish_button");	
     var pc_config = {
         'iceServers' : [ {
-            'urls': process.env.STUN_SERVER,
+            'urls': process.env.TURN_SERVER,
             'username': process.env.TURN_USER,
             'credential': process.env.TURN_PASS
         },
         {
-            'urls': process.env.TURN_SERVER,
+            'urls': process.env.STUN_SERVER ,
             'username': process.env.TURN_USER,
             'credential': process.env.TURN_PASS
         }]
@@ -80,7 +80,6 @@ initClass(apiToken).then((response) => {
         });
         });
         $('#userName').text(response.data.name);
-        initWebRTCAdaptor(false, true);
         fetchChat(apiToken, streamId, User);
         // Client = mqttInit(apiToken,streamId, User);
         // handleForm();
@@ -237,7 +236,7 @@ initClass(apiToken).then((response) => {
 	// 	websocketURL = "wss://" + path;
 	// }
 
-    var websocketURL = "wss://stream.futurelines.live:5443/WebRTCAppEE/websocket?rtmpForward=false"
+    var websocketURL = "wss://stream.futurelines.live:5443/WebRTCAppEE/websocket?rtmpForward=true"
 	var	webRTCAdaptor = null;
 	
 	function initWebRTCAdaptor(publishImmediately, autoRepublishEnabled) 
