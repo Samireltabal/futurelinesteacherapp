@@ -1,14 +1,16 @@
 import UIkit from 'uikit';
 import Icons from 'uikit/dist/js/uikit-icons';
 import { WebRTCAdaptor } from './js/webrtc_adaptor';
+import { appendChat } from './js/chat';
 UIkit.use(Icons);
 // components can be called from the imported UIkit reference
 UIkit.notification('test', 'success');
 import $ from 'jquery'
 import './index.css';
-import { mqttInit } from './js/mqtt';
+import moment from 'moment';
 import { initClass, fetchStudents, fetchInfo, fetchChat } from './js/axios';
 import { ping } from './js/app';
+import { handleData } from './js/dataHandler';
 var User;
 var Client; 
 $(document).ready(function () {
@@ -24,7 +26,8 @@ $(document).ready(function () {
         `);
     });
 });
-var token = null
+
+    var token = null
     var start_publish_button = document.getElementById("start_publish_button");
 	var stop_publish_button = document.getElementById("stop_publish_button");	
     var pc_config = {
@@ -59,30 +62,33 @@ var token = null
     var isCameraOff = false;
     var camera_button = $('#camera_toggle');
     var audio_button = $('#audio_toggle');
-initClass(apiToken).then((response) => {
-    User = response.data
-    localStorage.setItem('user', JSON.stringify(response.data));
-    fetchStudents(apiToken, streamId).then(() => {
-        $(document).ready( function () {
-            var students = document.getElementsByClassName('StudentItem')
-            for (let element of students) {
-                $(element).on('click', function() {
-                    allowUser(element.id);
-                });
-            }
-            $('#denyAll').on('click', function() {
-                var obj = {
-                    remoteStream: null,
-                    order: "DENY_ALL"
+    document.getElementById("alternateStream").onclick = function() {
+        window.open('https://stream.futurelines.live:5443/WebRTCAppEE/index.html?name=' + streamId)		
+    };
+    initClass(apiToken).then((response) => {
+        User = response.data
+        localStorage.setItem('user', JSON.stringify(response.data));
+        fetchStudents(apiToken, streamId).then(() => {
+            $(document).ready( function () {
+                var students = document.getElementsByClassName('StudentItem')
+                for (let element of students) {
+                    $(element).on('click', function() {
+                        allowUser(element.id);
+                    });
                 }
-                Client.publish('/class/' + streamId + "/orders", JSON.stringify(obj));
+                $('#denyAll').on('click', function() {
+                    var obj = {
+                        remoteStream: null,
+                        order: "DENY_ALL"
+                    }
+                    Client.publish('/class/' + streamId + "/orders", JSON.stringify(obj));
+                });
             });
-        });
-        });
-        $('#userName').text(response.data.name);
-        fetchChat(apiToken, streamId, User);
-        // Client = mqttInit(apiToken,streamId, User);
-        // handleForm();
+            });
+            $('#userName').text(response.data.name);
+            fetchChat(apiToken, streamId, User);
+            // Client = mqttInit(apiToken,streamId, User);
+            // handleForm();
     });
     $(start_publish_button).on('click', startPublishing);
     $(stop_publish_button).on('click', stopPublishing);
@@ -236,7 +242,7 @@ initClass(apiToken).then((response) => {
 	// 	websocketURL = "wss://" + path;
 	// }
 
-    var websocketURL = "wss://stream.futurelines.live:5443/WebRTCAppEE/websocket?rtmpForward=true"
+    var websocketURL = "wss://stream.futurelines.live:5443/WebRTCAppEE/websocket?rtmpForward=false"
 	var	webRTCAdaptor = null;
 	
 	function initWebRTCAdaptor(publishImmediately, autoRepublishEnabled) 
@@ -273,7 +279,7 @@ initClass(apiToken).then((response) => {
 							}, 3000);
 							
                         }
-                        setInterval(() => {
+                        var timer = setInterval(() => {
                             var state = webRTCAdaptor.signallingState(streamId);
                             if (state != null
                                     && state != "closed") {
@@ -282,13 +288,21 @@ initClass(apiToken).then((response) => {
                                 if (iceState != null
                                         && iceState != "failed"
                                         && iceState != "disconnected") {
-                                    console.log(webRTCAdaptor.getStreamInfo(streamId))
+                                    fetchInfo(apiToken, streamId).then((response) => {
+                                        $('#viewers').text(response.data.webRTCViewerCount);
+                                        $('#speed').text(response.data.speed);
+                                        $('#start').text(moment(moment(response.data.startTime).format('YYYYMMDDkkmmss'), 'YYYYMMDDkkmmss').fromNow());
+                                    });
+                                    webRTCAdaptor.getIceStats(streamId).then((response) => {
+                                        console.log(response);
+                                    })
                                 }
                             }
-                        }, 5000);
+                        }, 15000);
 					} else if (info == "publish_finished") {
 						//stream is being finished
-						console.log("publish finished");
+                        console.log("publish finished");
+                        clearInterval(timer);
 						start_publish_button.disabled = false;
                         stop_publish_button.disabled = true;
                         $('#averageSpeed').text('0');
@@ -322,17 +336,13 @@ initClass(apiToken).then((response) => {
 						console.log("iceConnectionState Changed: ",JSON.stringify(obj));
 					}
 					else if (info == "updated_stats") {
-						//obj is the PeerStats which has fields
-						 //averageOutgoingBitrate - kbits/sec
-						//currentOutgoingBitrate - kbits/sec
-						// console.log("Average outgoing bitrate " + obj.averageOutgoingBitrate + " kbits/sec"
-						// 		+ " Current outgoing bitrate: " + obj.currentOutgoingBitrate + " kbits/sec");
                         $('#averageSpeed').text(obj.averageOutgoingBitrate);
                         $('#currentSpeed').text(obj.currentOutgoingBitrate);
 					}
 					else if (info == "data_received") {
-						console.log("Data received: " + obj.event.data + " type: " + obj.event.type + " for stream: " + obj.streamId);
-						$("#dataMessagesTextarea").append("Received: " + obj.event.data + "\r\n");
+                        handleData(obj)
+                        // console.log("Data received: " + obj.event.data + " type: " + obj.event.type + " for stream: " + obj.streamId);
+						// $("#dataMessagesTextarea").append("Received: " + obj.event.data + "\r\n");
 					}
 					else if (info == "available_devices") {
 						var videoHtmlContent = "";
@@ -420,3 +430,15 @@ initClass(apiToken).then((response) => {
         $('html').toggleClass('uk-background-muted uk-background-secondary');
       });
       
+$(document).ready( function () {
+    $('#sent').click( function () {
+        appendChat('sent', {sender: "samir", message:"hello from js"})
+    })
+    $('#recieved').click( function () {
+        appendChat('recieved', {sender: "samir", message:"hello from js"})
+    })
+    $('#info').click( function () {
+        appendChat('info', {sender: "samir", message:"hello from js"})
+        webRTCAdaptor.sendData(streamId, "Hi!");
+    })
+})

@@ -1368,7 +1368,10 @@ export  function WebRTCAdaptor(initialValues)
 
 		thiz.webSocketAdaptor.send(JSON.stringify(jsCmd));
 	}
-	
+	this.getIceStats = async function (streamId) {
+		var stats = thiz.remotePeerConnection[streamId].getReceivers();
+		return stats;
+	}
 	this.forceStreamQuality = function (streamId, resolution) {
 		var jsCmd = {
 				command : "forceStreamQuality",
